@@ -76,6 +76,12 @@ SENSOR_TYPES = {
         "device_class": SensorDeviceClass.TIMESTAMP,
         "state_class": None,
     },
+    "update_interval": {
+        "name": "Refresh Interval",
+        "icon": "mdi:timer-cog-outline",
+        "device_class": None,
+        "state_class": None,
+    },
 }
 
 
@@ -136,6 +142,9 @@ class ETFfolioSensor(CoordinatorEntity, SensorEntity):
                 return datetime.fromisoformat(val)
             except (ValueError, TypeError):
                 return None
+        # Show "Off" or "Xh" for the interval sensor
+        if self._sensor_type == "update_interval":
+            return "Off" if val == 0 else f"{val}h"
         return val
 
     @property

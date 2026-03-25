@@ -23,7 +23,7 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(hours=interval),
+            update_interval=timedelta(hours=interval) if interval > 0 else None,
         )
         self.db = db
         self.config = config
@@ -102,4 +102,5 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
             "num_records": len(holdings),
             "currency": self.config.get("currency", "EUR"),
             "last_price_fetch": self.last_price_fetch,
+            "update_interval": self.config.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
         }

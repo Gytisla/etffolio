@@ -48,12 +48,13 @@ class ETFfolioConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_ALPHA_VANTAGE_KEY, default=""): str,
                     vol.Required(
                         CONF_UPDATE_INTERVAL, default=DEFAULT_UPDATE_INTERVAL
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=24)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=24)),
                     vol.Required(
                         CONF_CURRENCY, default=DEFAULT_CURRENCY
                     ): vol.In(CURRENCIES),
                 }
             ),
+            description_placeholders={"interval_note": "0 = disabled (manual only)"},
         )
 
     @staticmethod
@@ -94,7 +95,7 @@ class ETFfolioOptionsFlow(OptionsFlow):
                     vol.Required(
                         CONF_UPDATE_INTERVAL,
                         default=current.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=24)),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=0, max=24)),
                     vol.Required(
                         CONF_CURRENCY,
                         default=current.get(CONF_CURRENCY, DEFAULT_CURRENCY),
