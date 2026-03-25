@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -69,6 +70,12 @@ SENSOR_TYPES = {
         "state_class": SensorStateClass.MEASUREMENT,
         "unit": "ETFs",
     },
+    "last_price_fetch": {
+        "name": "Last Price Update",
+        "icon": "mdi:clock-check-outline",
+        "device_class": SensorDeviceClass.TIMESTAMP,
+        "state_class": None,
+    },
 }
 
 
@@ -122,7 +129,14 @@ class ETFfolioSensor(CoordinatorEntity, SensorEntity):
         """Return the sensor value."""
         if self.coordinator.data is None:
             return None
-        return self.coordinator.data.get(self._sensor_type)
+        val = self.coordinator.data.get(self._sensor_type)
+        # TIMESTAMP device class needs a datetime object
+        if self._sensor_type == "last_price_fetch" and isinstance(val, str):
+            try:
+                return datetime.fromisoformat(val)
+            except (ValueError, TypeError):
+                return None
+        return val
 
     @property
     def device_info(self):
