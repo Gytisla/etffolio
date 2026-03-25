@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  base: '/etffolio_panel/',
   server: {
     proxy: {
       '/api': 'http://localhost:8099',

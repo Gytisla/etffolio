@@ -1,6 +1,7 @@
 """HTTP API views for ETFfolio — serves the REST API and frontend panel."""
 
 import logging
+import mimetypes
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -505,8 +506,33 @@ class ETFfolioPanelView(HomeAssistantView):
     name = "etffolio:panel"
     requires_auth = False
 
+    # Ensure JS/CSS are served with correct MIME types
+    MIME_TYPES = {
+        ".js": "application/javascript",
+        ".css": "text/css",
+        ".html": "text/html",
+        ".json": "application/json",
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".ico": "image/x-icon",
+        ".woff": "font/woff",
+        ".woff2": "font/woff2",
+    }
+
     def __init__(self, frontend_path: str) -> None:
         self._frontend_path = Path(frontend_path)
+
+    def _file_response(self, file_path: Path) -> web.Response:
+        """Return a response with correct Content-Type for the file."""
+        suffix = file_path.suffix.lower()
+        content_type = self.MIME_TYPES.get(
+            suffix,
+            mimetypes.guess_type(str(file_path))[0] or "application/octet-stream",
+        )
+        return web.FileResponse(
+            file_path,
+            headers={"Content-Type": content_type},
+        )
 
     async def get(
         self, request: web.Request, path: str = ""
@@ -515,12 +541,12 @@ class ETFfolioPanelView(HomeAssistantView):
         if path:
             file_path = self._frontend_path / path
             if file_path.is_file():
-                return web.FileResponse(file_path)
+                return self._file_response(file_path)
 
         # Fallback to index.html (SPA routing)
         index = self._frontend_path / "index.html"
         if index.is_file():
-            return web.FileResponse(index)
+            return self._file_response(index)
 
         return web.Response(
             text="ETFfolio frontend not built. Run: cd frontend && npm run build",
