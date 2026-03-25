@@ -111,7 +111,7 @@ function Ranges({ active, onChange }) {
   const c = useTheme();
   return (
     <div style={{ display: "flex", gap: 4 }}>
-      {["1W", "1M", "3M", "6M", "1Y", "ALL"].map((r) => (
+      {["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"].map((r) => (
         <button key={r} onClick={() => onChange(r)} style={{
           fontFamily: "'JetBrains Mono'", fontSize: 12, fontWeight: 700,
           padding: "7px 16px", borderRadius: 8, border: "none", cursor: "pointer", transition: "all .2s",
