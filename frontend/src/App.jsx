@@ -154,29 +154,46 @@ function SidebarToggle() {
       const ha = pp.document.querySelector("home-assistant");
       const main = ha?.shadowRoot?.querySelector("home-assistant-main");
       const drawer = main?.shadowRoot?.querySelector("ha-drawer");
-      // The toolbar lives inside the panel content area:
-      // ha-drawer > [slot="appContent"] > ha-panel-iframe > shadowRoot > .toolbar / app-toolbar
-      const panelIframe = drawer?.querySelector("ha-panel-iframe");
-      const toolbar = panelIframe?.shadowRoot?.querySelector("div.header") 
-        || panelIframe?.shadowRoot?.querySelector("app-toolbar")
-        || panelIframe?.shadowRoot?.querySelector(".toolbar");
-      return { drawer, toolbar };
+      // ha-panel-iframe > shadowRoot > hass-subpage > shadowRoot > toolbar
+      const panel = drawer?.querySelector("ha-panel-iframe");
+      const subpage = panel?.shadowRoot?.querySelector("hass-subpage");
+      const toolbar = subpage?.shadowRoot?.querySelector(".toolbar")
+        || subpage?.shadowRoot?.querySelector("app-toolbar")
+        || subpage?.shadowRoot?.querySelector("div[slot='toolbar']")
+        || subpage?.shadowRoot?.querySelector("ha-app-layout-toolbar")
+        || subpage?.shadowRoot?.querySelector("[class*='toolbar']");
+      return { drawer, toolbar, subpage };
     } catch { return null; }
   }, []);
 
   const setSidebar = useCallback((hide) => {
     const els = getHAElements();
     if (!els?.drawer) return;
-    const { drawer, toolbar } = els;
+    const { drawer, toolbar, subpage } = els;
     drawer.open = !hide;
     if (hide) {
       drawer.setAttribute("data-etffolio-hidden", "true");
       drawer.style.setProperty("--mdc-drawer-width", "0px");
       if (toolbar) toolbar.style.display = "none";
+      // If we couldn't find a specific toolbar, hide the whole subpage header area
+      if (!toolbar && subpage?.shadowRoot) {
+        // Try to inject a style to hide the toolbar
+        const id = "etffolio-hide-toolbar";
+        if (!subpage.shadowRoot.getElementById(id)) {
+          const style = document.createElement("style");
+          style.id = id;
+          style.textContent = ".toolbar, app-toolbar, [slot='toolbar'], ha-app-layout-toolbar { display: none !important; }";
+          subpage.shadowRoot.appendChild(style);
+        }
+      }
     } else {
       drawer.removeAttribute("data-etffolio-hidden");
       drawer.style.removeProperty("--mdc-drawer-width");
       if (toolbar) toolbar.style.display = "";
+      if (subpage?.shadowRoot) {
+        const injected = subpage.shadowRoot.getElementById("etffolio-hide-toolbar");
+        if (injected) injected.remove();
+      }
     }
     setHidden(hide);
   }, [getHAElements]);
