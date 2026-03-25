@@ -28,6 +28,13 @@ def _get_config(hass: HomeAssistant) -> dict:
     return hass.data[DOMAIN]["config"]
 
 
+async def _refresh_sensors(hass: HomeAssistant) -> None:
+    """Tell the coordinator to recompute sensor data now."""
+    coordinator = hass.data.get(DOMAIN, {}).get("coordinator")
+    if coordinator:
+        await coordinator.async_request_refresh()
+
+
 # ─── Holdings ─────────────────────────────────────────────────
 
 
@@ -107,6 +114,7 @@ class ETFfolioHoldingsView(HomeAssistantView):
                 config.get(CONF_ALPHA_VANTAGE_KEY, ""),
             )
 
+        await _refresh_sensors(hass)
         return self.json(h)
 
 
@@ -125,6 +133,7 @@ class ETFfolioHoldingDetailView(HomeAssistantView):
         result = await db.update_holding(int(holding_id), **data)
         if not result:
             return self.json_message("Holding not found", status_code=404)
+        await _refresh_sensors(hass)
         return self.json(result)
 
     async def delete(self, request: web.Request, holding_id: str) -> web.Response:
@@ -134,6 +143,7 @@ class ETFfolioHoldingDetailView(HomeAssistantView):
         ok = await db.delete_holding(int(holding_id))
         if not ok:
             return self.json_message("Holding not found", status_code=404)
+        await _refresh_sensors(hass)
         return self.json({"deleted": True})
 
 
@@ -413,6 +423,7 @@ class ETFfolioFetchTickerView(HomeAssistantView):
             config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE),
             config.get(CONF_ALPHA_VANTAGE_KEY, ""),
         )
+        await _refresh_sensors(hass)
         return self.json(result)
 
 
@@ -432,6 +443,7 @@ class ETFfolioFetchAllView(HomeAssistantView):
             config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE),
             config.get(CONF_ALPHA_VANTAGE_KEY, ""),
         )
+        await _refresh_sensors(hass)
         return self.json(results)
 
 

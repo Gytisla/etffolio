@@ -27,22 +27,30 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
         )
         self.db = db
         self.config = config
+        self._fetch_prices = True  # True on scheduled updates, False on manual refresh
 
     async def _async_update_data(self) -> dict:
-        """Fetch prices and compute portfolio summary."""
-        source = self.config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE)
-        api_key = self.config.get(CONF_ALPHA_VANTAGE_KEY, "")
+        """Compute portfolio summary. Fetch prices only on scheduled updates."""
+        if self._fetch_prices:
+            source = self.config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE)
+            api_key = self.config.get(CONF_ALPHA_VANTAGE_KEY, "")
 
-        # Fetch latest prices
-        results = await fetch_all_holdings(self.db, source, api_key)
-        success = sum(1 for r in results if not r.get("error"))
-        failed = sum(1 for r in results if r.get("error"))
-        _LOGGER.info(
-            "Price update complete: %d succeeded, %d failed", success, failed
-        )
+            results = await fetch_all_holdings(self.db, source, api_key)
+            success = sum(1 for r in results if not r.get("error"))
+            failed = sum(1 for r in results if r.get("error"))
+            _LOGGER.info(
+                "Price update complete: %d succeeded, %d failed", success, failed
+            )
+        else:
+            # Reset flag so next scheduled update fetches prices again
+            self._fetch_prices = True
 
-        # Compute summary for sensors
         return await self._compute_summary()
+
+    async def async_request_refresh(self) -> None:
+        """Refresh sensor data without fetching prices."""
+        self._fetch_prices = False
+        await super().async_request_refresh()
 
     async def _compute_summary(self) -> dict:
         """Compute portfolio summary from DB data."""
