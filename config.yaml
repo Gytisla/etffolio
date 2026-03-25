@@ -1,6 +1,6 @@
 # ─── ETFfolio - Home Assistant Add-on Configuration ───────────
 name: "ETFfolio"
-version: "0.1.1"
+version: "0.0.2"
 slug: "etffolio"
 description: "Track your ETF portfolio with automatic price updates, split handling, and performance analytics"
 url: "https://github.com/yourusername/ha-etffolio"
