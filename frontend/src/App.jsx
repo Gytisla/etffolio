@@ -57,6 +57,8 @@ const I = {
   bars: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>,
   sun: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>,
   moon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>,
+  expand: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
+  shrink: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>,
 };
 
 // ─── STAT CARD ───────────────────────────────────────────────
@@ -135,6 +137,44 @@ function ThemeToggle({ dark, onToggle }) {
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.mint; e.currentTarget.style.color = c.mint; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.bd; e.currentTarget.style.color = c.t2; }}>
       {dark ? I.sun : I.moon}
+    </button>
+  );
+}
+
+// ─── FULLSCREEN TOGGLE ───────────────────────────────────────
+function FullscreenToggle() {
+  const c = useTheme();
+  const [fs, setFs] = useState(false);
+
+  useEffect(() => {
+    const onChange = () => setFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggle = () => {
+    // Try to fullscreen the topmost document we have access to (breaks out of HA iframe)
+    const target = window.top?.document?.documentElement || document.documentElement;
+    if (!document.fullscreenElement) {
+      target.requestFullscreen?.().catch(() =>
+        document.documentElement.requestFullscreen?.().catch(() => {})
+      );
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  };
+
+  return (
+    <button onClick={toggle} title={fs ? "Exit fullscreen" : "Fullscreen"}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "center",
+        width: 42, height: 42, borderRadius: 12,
+        border: `1px solid ${c.bd}`, background: c.l2, color: c.t2,
+        cursor: "pointer", transition: "all .25s", flexShrink: 0,
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.mint; e.currentTarget.style.color = c.mint; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.bd; e.currentTarget.style.color = c.t2; }}>
+      {fs ? I.shrink : I.expand}
     </button>
   );
 }
@@ -873,6 +913,7 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <FullscreenToggle />
             <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
             <button onClick={handleRefresh} disabled={refreshing} style={{
               display: "flex", alignItems: "center", gap: 8, padding: "11px 20px",
