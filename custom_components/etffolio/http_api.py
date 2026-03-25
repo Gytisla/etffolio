@@ -11,7 +11,7 @@ from aiohttp import web
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ALPHA_VANTAGE_KEY, CONF_CURRENCY, CONF_PRICE_SOURCE, DEFAULT_CURRENCY, DEFAULT_PRICE_SOURCE, DOMAIN
+from .const import CONF_ALPHA_VANTAGE_KEY, CONF_CURRENCY, CONF_PRICE_SOURCE, CONF_UPDATE_INTERVAL, DEFAULT_CURRENCY, DEFAULT_PRICE_SOURCE, DEFAULT_UPDATE_INTERVAL, DOMAIN
 from .database import ETFfolioDB
 from .prices import TICKER_MAP, fetch_all_holdings, fetch_and_store
 
@@ -206,6 +206,8 @@ class ETFfolioSummaryView(HomeAssistantView):
             "num_positions": len(tickers),
             "num_records": len(holdings),
             "currency": config.get(CONF_CURRENCY, DEFAULT_CURRENCY),
+            "update_interval_hours": config.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
+            "last_updated": datetime.now().isoformat(),
         })
 
 

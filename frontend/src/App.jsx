@@ -903,12 +903,20 @@ export default function App() {
                 background: c.l1, color: c.t3, padding: "3px 10px", borderRadius: 6,
                 border: `1px solid ${c.bd}`, marginLeft: 4 }}>{stats.currency || "EUR"}</span>
             </h1>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5, fontSize: 13, color: c.t3 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 5, fontSize: 13, color: c.t3, flexWrap: "wrap" }}>
               <span style={{ display: "flex" }}>{I.globe}</span>
               {stats.num_records} records · {stats.num_positions} ETFs
               {stats.total_fees > 0 && <>
                 <span style={{ marginLeft: 4 }}>·</span>
                 <span style={{ color: c.amber }}>{eur(stats.total_fees)} fees</span>
+              </>}
+              {stats.last_updated && <>
+                <span style={{ marginLeft: 4 }}>·</span>
+                <span>Updated {new Date(stats.last_updated).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+              </>}
+              {stats.update_interval_hours && <>
+                <span style={{ marginLeft: 4 }}>·</span>
+                <span>every {stats.update_interval_hours}h</span>
               </>}
             </div>
           </div>

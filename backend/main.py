@@ -176,6 +176,8 @@ async def portfolio_summary() -> dict:
         "num_positions": len(tickers),
         "num_records": len(holdings),
         "currency": os.environ.get("CURRENCY", "EUR"),
+        "update_interval_hours": int(os.environ.get("UPDATE_INTERVAL", "6")),
+        "last_updated": datetime.now().isoformat(),
     }
 
 
