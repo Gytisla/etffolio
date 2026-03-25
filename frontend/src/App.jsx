@@ -141,31 +141,49 @@ function ThemeToggle({ dark, onToggle }) {
   );
 }
 
-// ─── FULLSCREEN TOGGLE ───────────────────────────────────────
-function FullscreenToggle() {
+// ─── SIDEBAR TOGGLE ──────────────────────────────────────────
+function SidebarToggle() {
   const c = useTheme();
-  const [fs, setFs] = useState(false);
-
-  useEffect(() => {
-    const onChange = () => setFs(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", onChange);
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
+  const [hidden, setHidden] = useState(false);
 
   const toggle = () => {
-    // Try to fullscreen the topmost document we have access to (breaks out of HA iframe)
-    const target = window.top?.document?.documentElement || document.documentElement;
-    if (!document.fullscreenElement) {
-      target.requestFullscreen?.().catch(() =>
-        document.documentElement.requestFullscreen?.().catch(() => {})
-      );
-    } else {
-      document.exitFullscreen?.().catch(() => {});
+    try {
+      const pp = window.parent;
+      if (!pp || pp === window) return;
+
+      // HA structure: home-assistant > shadowRoot > home-assistant-main > shadowRoot > ha-drawer
+      const ha = pp.document.querySelector("home-assistant");
+      const main = ha?.shadowRoot?.querySelector("home-assistant-main");
+      const drawer = main?.shadowRoot?.querySelector("ha-drawer");
+
+      if (drawer) {
+        const next = !hidden;
+        drawer.open = !next;
+        // Also set the narrow attribute to prevent it reopening
+        if (next) {
+          drawer.setAttribute("data-etffolio-hidden", "true");
+          drawer.style.setProperty("--mdc-drawer-width", "0px");
+        } else {
+          drawer.removeAttribute("data-etffolio-hidden");
+          drawer.style.removeProperty("--mdc-drawer-width");
+        }
+        setHidden(next);
+      }
+    } catch {
+      // Cross-origin or not in HA — ignore
     }
   };
 
+  // Only show this button when running inside HA iframe
+  const inHA = useRef(false);
+  useEffect(() => {
+    try { inHA.current = window.parent !== window && !!window.parent.document.querySelector("home-assistant"); } catch { inHA.current = false; }
+  }, []);
+
+  if (!inHA.current) return null;
+
   return (
-    <button onClick={toggle} title={fs ? "Exit fullscreen" : "Fullscreen"}
+    <button onClick={toggle} title={hidden ? "Show sidebar" : "Hide sidebar"}
       style={{
         display: "flex", alignItems: "center", justifyContent: "center",
         width: 42, height: 42, borderRadius: 12,
@@ -174,7 +192,7 @@ function FullscreenToggle() {
       }}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.mint; e.currentTarget.style.color = c.mint; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.bd; e.currentTarget.style.color = c.t2; }}>
-      {fs ? I.shrink : I.expand}
+      {hidden ? I.expand : I.shrink}
     </button>
   );
 }
@@ -921,7 +939,7 @@ export default function App() {
             </div>
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-            <FullscreenToggle />
+            <SidebarToggle />
             <ThemeToggle dark={dark} onToggle={() => setDark((d) => !d)} />
             <button onClick={handleRefresh} disabled={refreshing} style={{
               display: "flex", alignItems: "center", gap: 8, padding: "11px 20px",
