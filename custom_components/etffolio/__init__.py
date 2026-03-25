@@ -5,6 +5,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
+from homeassistant.components.frontend import (
+    async_register_built_in_panel,
+    async_remove_panel,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
@@ -51,17 +55,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     register_views(hass, frontend_path)
 
     # Register sidebar panel (iframe to our served frontend)
-    hass.components.frontend.async_register_built_in_panel(
+    async_register_built_in_panel(
+        hass,
         "iframe",
-        title="ETFfolio",
-        icon="mdi:chart-line",
+        sidebar_title="ETFfolio",
+        sidebar_icon="mdi:chart-line",
         frontend_url_path="etffolio",
         config={"url": "/etffolio_panel"},
         require_admin=False,
     )
 
-    # Initial data fetch
-    await coordinator.async_config_entry_first_refresh()
+    # Initial data fetch — non-fatal so HA still loads if prices are unavailable
+    try:
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as err:
+        _LOGGER.warning("ETFfolio initial price fetch failed (non-fatal): %s", err)
 
     # Forward sensor platform setup
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -79,7 +87,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if unload_ok:
         # Remove the sidebar panel
-        hass.components.frontend.async_remove_panel("etffolio")
+        async_remove_panel(hass, "etffolio")
         hass.data.pop(DOMAIN, None)
         _LOGGER.info("ETFfolio integration unloaded")
 
