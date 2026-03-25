@@ -1,0 +1,24 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Start ETFfolio server
+# ==============================================================================
+
+# Read config from HA Supervisor options
+export PRICE_SOURCE=$(bashio::config 'price_source')
+export ALPHA_VANTAGE_KEY=$(bashio::config 'alpha_vantage_api_key')
+export UPDATE_INTERVAL=$(bashio::config 'update_interval_hours')
+export CURRENCY=$(bashio::config 'currency')
+export LOG_LEVEL=$(bashio::config 'log_level')
+export INGRESS_PORT=8099
+
+bashio::log.info "Starting ETFfolio..."
+bashio::log.info "  Price source: ${PRICE_SOURCE}"
+bashio::log.info "  Update interval: ${UPDATE_INTERVAL}h"
+bashio::log.info "  Currency: ${CURRENCY}"
+
+cd /app
+exec python3 -m uvicorn backend.main:app \
+    --host 0.0.0.0 \
+    --port ${INGRESS_PORT} \
+    --log-level ${LOG_LEVEL}

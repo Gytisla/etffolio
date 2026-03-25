@@ -1,0 +1,11 @@
+{
+  "domain": "etffolio",
+  "name": "ETFfolio",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/yourusername/etffolio",
+  "iot_class": "cloud_polling",
+  "requirements": ["yfinance>=1.2.0", "aiosqlite>=0.20.0"],
+  "version": "0.1.0",
+  "integration_type": "service"
+}

@@ -1,0 +1,16 @@
+configuration:
+  price_source:
+    name: "Price Data Source"
+    description: "Primary source for fetching ETF prices. 'both' uses yfinance first, falls back to Alpha Vantage."
+  alpha_vantage_api_key:
+    name: "Alpha Vantage API Key"
+    description: "Required if price_source is 'alpha_vantage' or 'both'. Get a free key at alphavantage.co"
+  update_interval_hours:
+    name: "Update Interval (hours)"
+    description: "How often to fetch new prices. Minimum 1 hour, default 6."
+  currency:
+    name: "Display Currency"
+    description: "Currency for displaying portfolio values."
+  log_level:
+    name: "Log Level"
+    description: "Logging verbosity for troubleshooting."

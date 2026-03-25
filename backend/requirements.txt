@@ -1,0 +1,8 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+yfinance>=1.2.0
+alpha_vantage==3.0.0
+apscheduler==3.10.4
+aiosqlite==0.20.0
+pydantic==2.10.3
+httpx==0.28.1

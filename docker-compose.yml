@@ -1,0 +1,21 @@
+# Local development — run with: docker compose up
+# No Home Assistant needed.
+
+services:
+  etffolio:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    ports:
+      - "8099:8099"
+    volumes:
+      - ./data:/data          # Persistent SQLite DB
+      - ./backend:/app/backend # Live reload backend code
+    environment:
+      - PRICE_SOURCE=both
+      - ALPHA_VANTAGE_KEY=${ALPHA_VANTAGE_KEY:-}
+      - UPDATE_INTERVAL=6
+      - CURRENCY=EUR
+      - LOG_LEVEL=info
+      - DB_PATH=/data/etffolio.db
+    restart: unless-stopped

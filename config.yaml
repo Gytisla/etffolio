@@ -1,0 +1,47 @@
+# ─── ETFfolio - Home Assistant Add-on Configuration ───────────
+name: "ETFfolio"
+version: "0.1.0"
+slug: "etffolio"
+description: "Track your ETF portfolio with automatic price updates, split handling, and performance analytics"
+url: "https://github.com/yourusername/ha-etffolio"
+
+arch:
+  - amd64
+  - aarch64
+  - armv7
+
+# ─── Ingress (embeds UI in HA sidebar) ────────────────────────
+ingress: true
+ingress_port: 8099
+panel_icon: "mdi:chart-line"
+panel_title: "ETFfolio"
+
+# ─── Startup & permissions ────────────────────────────────────
+startup: "application"
+boot: "auto"
+homeassistant_api: false
+hassio_api: false
+
+# ─── Persistent data ─────────────────────────────────────────
+map:
+  - addon_config:rw
+
+# ─── Schema-driven config UI ─────────────────────────────────
+# HA Supervisor auto-generates a settings panel from this schema.
+# Users configure these options in the addon's "Configuration" tab.
+options:
+  price_source: "yfinance"
+  alpha_vantage_api_key: ""
+  update_interval_hours: 6
+  currency: "EUR"
+  log_level: "info"
+
+schema:
+  price_source: list(yfinance|alpha_vantage|both)?
+  alpha_vantage_api_key: str?
+  update_interval_hours: "int(1,24)"
+  currency: list(EUR|USD|GBP|CHF)?
+  log_level: list(debug|info|warning|error)?
+
+# ─── Image ────────────────────────────────────────────────────
+image: "ghcr.io/yourusername/ha-etffolio-{arch}"
