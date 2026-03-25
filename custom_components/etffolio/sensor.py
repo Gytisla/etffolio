@@ -146,4 +146,5 @@ class ETFfolioSensor(CoordinatorEntity, SensorEntity):
             "total_fees": data.get("total_fees"),
             "num_records": data.get("num_records"),
             "currency": data.get("currency"),
+            "last_price_fetch": data.get("last_price_fetch"),
         }

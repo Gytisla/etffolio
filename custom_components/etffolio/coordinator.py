@@ -1,7 +1,7 @@
 """DataUpdateCoordinator for ETFfolio — periodically fetches prices."""
 
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -28,6 +28,7 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
         self.db = db
         self.config = config
         self._fetch_prices = True  # True on scheduled updates, False on manual refresh
+        self.last_price_fetch: str | None = None  # ISO timestamp of last successful price fetch
 
     async def _async_update_data(self) -> dict:
         """Compute portfolio summary. Fetch prices only on scheduled updates."""
@@ -38,6 +39,8 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
             results = await fetch_all_holdings(self.db, source, api_key)
             success = sum(1 for r in results if not r.get("error"))
             failed = sum(1 for r in results if r.get("error"))
+            if success > 0:
+                self.last_price_fetch = datetime.now().isoformat()
             _LOGGER.info(
                 "Price update complete: %d succeeded, %d failed", success, failed
             )
@@ -98,4 +101,5 @@ class ETFfolioCoordinator(DataUpdateCoordinator):
             "num_positions": len(tickers),
             "num_records": len(holdings),
             "currency": self.config.get("currency", "EUR"),
+            "last_price_fetch": self.last_price_fetch,
         }

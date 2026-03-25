@@ -35,6 +35,13 @@ async def _refresh_sensors(hass: HomeAssistant) -> None:
         await coordinator.async_request_refresh()
 
 
+async def _update_price_fetch_time(hass: HomeAssistant) -> None:
+    """Update the last_price_fetch timestamp on the coordinator."""
+    coordinator = hass.data.get(DOMAIN, {}).get("coordinator")
+    if coordinator:
+        coordinator.last_price_fetch = datetime.now().isoformat()
+
+
 # ─── Holdings ─────────────────────────────────────────────────
 
 
@@ -207,7 +214,8 @@ class ETFfolioSummaryView(HomeAssistantView):
             "num_records": len(holdings),
             "currency": config.get(CONF_CURRENCY, DEFAULT_CURRENCY),
             "update_interval_hours": config.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL),
-            "last_updated": datetime.now().isoformat(),
+            "last_updated": hass.data.get(DOMAIN, {}).get("coordinator", None)
+                and hass.data[DOMAIN]["coordinator"].last_price_fetch,
         })
 
 
@@ -425,6 +433,7 @@ class ETFfolioFetchTickerView(HomeAssistantView):
             config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE),
             config.get(CONF_ALPHA_VANTAGE_KEY, ""),
         )
+        await _update_price_fetch_time(hass)
         await _refresh_sensors(hass)
         return self.json(result)
 
@@ -445,6 +454,7 @@ class ETFfolioFetchAllView(HomeAssistantView):
             config.get(CONF_PRICE_SOURCE, DEFAULT_PRICE_SOURCE),
             config.get(CONF_ALPHA_VANTAGE_KEY, ""),
         )
+        await _update_price_fetch_time(hass)
         await _refresh_sensors(hass)
         return self.json(results)
 
