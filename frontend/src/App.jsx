@@ -145,45 +145,69 @@ function ThemeToggle({ dark, onToggle }) {
 function SidebarToggle() {
   const c = useTheme();
   const [hidden, setHidden] = useState(false);
+  const [inHA, setInHA] = useState(false);
 
-  const toggle = () => {
+  const getHAElements = useCallback(() => {
     try {
       const pp = window.parent;
-      if (!pp || pp === window) return;
-
-      // HA structure: home-assistant > shadowRoot > home-assistant-main > shadowRoot > ha-drawer
+      if (!pp || pp === window) return null;
       const ha = pp.document.querySelector("home-assistant");
       const main = ha?.shadowRoot?.querySelector("home-assistant-main");
       const drawer = main?.shadowRoot?.querySelector("ha-drawer");
-
-      if (drawer) {
-        const next = !hidden;
-        drawer.open = !next;
-        // Also set the narrow attribute to prevent it reopening
-        if (next) {
-          drawer.setAttribute("data-etffolio-hidden", "true");
-          drawer.style.setProperty("--mdc-drawer-width", "0px");
-        } else {
-          drawer.removeAttribute("data-etffolio-hidden");
-          drawer.style.removeProperty("--mdc-drawer-width");
-        }
-        setHidden(next);
-      }
-    } catch {
-      // Cross-origin or not in HA — ignore
-    }
-  };
-
-  // Only show this button when running inside HA iframe
-  const inHA = useRef(false);
-  useEffect(() => {
-    try { inHA.current = window.parent !== window && !!window.parent.document.querySelector("home-assistant"); } catch { inHA.current = false; }
+      // The toolbar lives inside the panel content area:
+      // ha-drawer > [slot="appContent"] > ha-panel-iframe > shadowRoot > .toolbar / app-toolbar
+      const panelIframe = drawer?.querySelector("ha-panel-iframe");
+      const toolbar = panelIframe?.shadowRoot?.querySelector("div.header") 
+        || panelIframe?.shadowRoot?.querySelector("app-toolbar")
+        || panelIframe?.shadowRoot?.querySelector(".toolbar");
+      return { drawer, toolbar };
+    } catch { return null; }
   }, []);
 
-  if (!inHA.current) return null;
+  const setSidebar = useCallback((hide) => {
+    const els = getHAElements();
+    if (!els?.drawer) return;
+    const { drawer, toolbar } = els;
+    drawer.open = !hide;
+    if (hide) {
+      drawer.setAttribute("data-etffolio-hidden", "true");
+      drawer.style.setProperty("--mdc-drawer-width", "0px");
+      if (toolbar) toolbar.style.display = "none";
+    } else {
+      drawer.removeAttribute("data-etffolio-hidden");
+      drawer.style.removeProperty("--mdc-drawer-width");
+      if (toolbar) toolbar.style.display = "";
+    }
+    setHidden(hide);
+  }, [getHAElements]);
+
+  useEffect(() => {
+    // HA shadow DOM may not be ready on first render — poll until found
+    let attempts = 0;
+    const check = () => {
+      const els = getHAElements();
+      if (els?.drawer) {
+        setInHA(true);
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("hide_sidebar") === "true" || params.get("kiosk") === "true") {
+          setTimeout(() => setSidebar(true), 100);
+        }
+        return true;
+      }
+      return false;
+    };
+    if (check()) return;
+    const iv = setInterval(() => {
+      attempts++;
+      if (check() || attempts > 20) clearInterval(iv);
+    }, 250);
+    return () => clearInterval(iv);
+  }, [getHAElements, setSidebar]);
+
+  if (!inHA) return null;
 
   return (
-    <button onClick={toggle} title={hidden ? "Show sidebar" : "Hide sidebar"}
+    <button onClick={() => setSidebar(!hidden)} title={hidden ? "Show sidebar" : "Hide sidebar"}
       style={{
         display: "flex", alignItems: "center", justifyContent: "center",
         width: 42, height: 42, borderRadius: 12,
